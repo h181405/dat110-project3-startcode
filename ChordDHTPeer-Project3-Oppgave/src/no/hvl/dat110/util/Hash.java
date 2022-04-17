@@ -1,18 +1,12 @@
 package no.hvl.dat110.util;
 
-/**
- * project 3
- * @author tdoy
- *
- */
-
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Hash { 
+	
+	private static MessageDigest md;
 	
 	private static BigInteger hashint; 
 	
@@ -30,6 +24,16 @@ public class Hash {
 		
 		// return the BigInteger
 		
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] messageDigest = md.digest(entity.getBytes());
+			String hex = toHex(messageDigest);
+			hashint = new BigInteger(hex, 16);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return hashint;
 	}
 	
@@ -45,14 +49,22 @@ public class Hash {
 		
 		// return the address size
 		
-		return null;
+		BigInteger two = new BigInteger("2");
+		BigInteger result = two.pow(bitSize());
+		return result;
 	}
 	
 	public static int bitSize() {
 		
 		int digestlen = 0;
 		
-		// find the digest length
+		try {
+			md = MessageDigest.getInstance("MD5");
+			digestlen = md.getDigestLength();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		return digestlen*8;
 	}

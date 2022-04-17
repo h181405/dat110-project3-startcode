@@ -63,7 +63,11 @@ public class FileManager {
 		// hash the replica
 		
 		// store the hash in the replicafiles array.
-
+		
+		for (int i = 0; i < numReplicas; i++) {
+			String str = filename + i;
+			replicafiles[i] = Hash.hashOf(str);
+		}
 	}
 	
     /**
@@ -90,8 +94,23 @@ public class FileManager {
     	
     	// increment counter
     	
-    		
-		return counter;
+    	Random rnd = new Random();
+		int index = rnd.nextInt(Util.numReplicas - 1);
+		createReplicaFiles();
+		int i = 0;
+		for (i = 0; i < replicafiles.length; i++) {
+			NodeInterface successor = chordnode.findSuccessor(replicafiles[i]);
+			if (successor != null) {
+				successor.addKey(replicafiles[i]);
+				if (i == index) {
+					successor.saveFileContent(filename, replicafiles[i], bytesOfFile, true);
+				} else {
+					successor.saveFileContent(filename, replicafiles[i], bytesOfFile, false);
+				}
+			}
+		}
+
+		return i;
     }
 	
 	/**
@@ -116,6 +135,20 @@ public class FileManager {
 		
 		// save the metadata in the set succinfo.
 		
+		
+		createReplicaFiles();
+		
+		for(int i=0; i< numReplicas;i++) {
+			NodeInterface node = chordnode.findSuccessor(replicafiles[i]);
+			
+			if(node != null) {
+				Message msg = node.getFilesMetadata(replicafiles[i]);
+				
+				succinfo.add(msg);
+			}
+		}
+		
+		
 		this.activeNodesforFile = succinfo;
 		
 		return succinfo;
@@ -136,6 +169,18 @@ public class FileManager {
 		// use the primaryServer boolean variable contained in the Message class to check if it is the primary or not
 		
 		// return the primary
+		
+		for(Message msg : activeNodesforFile) {
+			
+			if(msg.isPrimaryServer()) {
+				try {
+					return chordnode.findSuccessor(msg.getNodeID()).getPredecessor();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 		
 		return null; 
 	}
